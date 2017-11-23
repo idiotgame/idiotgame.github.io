@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Idiot - Multiplayer game</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Raleway:300,600" rel="stylesheet">
+    <style>
+      body {
+        position: absolute;
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+        width: 100%;
+        height: 100%;
+        font-family: "Raleway", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-weight: 300;
+
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+      }
+
+      body > * {
+        position: relative;
+        box-sizing: border-box;
+        width: 90%;
+        max-width: 500px;
+        text-align: center;
+        margin: none;
+        padding: 0;
+      }
+
+      h1, h4, #counter {
+        display: block;
+        font-weight: inherit;
+        font-size: 30px;
+        line-height: 1.35;
+        color: #222;
+        margin: 0;
+      }
+
+      #flex-wrap > h4 {
+        display: none;
+      }
+
+      #flex-wrap > span {
+        display: none;
+        font-size: 15px;
+        color: #222;
+        margin: 3px 0 0 0;
+      }
+
+      #flex-wrap > span > span {
+          font-family: Courier New,Courier, Lucida Sans Typewriter, Lucida Typewriter, monospace;
+          font-size: 16px;
+          margin-left: 5px;
+      }
+
+      #flex-wrap > #counter {
+        display: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      p {
+        font-weight: inherit;
+        font-size: 10px;
+        line-height: 1.5;
+        color: #555;
+      }
+
+      p > a {
+        color: inherit;
+        text-decoration: underline;
+      }
+
+      p > a:hover {
+        color: #1EAEDB;
+      }
+
+      p > span {
+        font-weight: 600;
+      }
+
+      #flex-wrap > div {
+        display: none;
+        border: 1px solid #E1E1E1;
+        border-left: none;
+        border-right: none;
+        padding: 40px 0;
+        margin: 30px 0;
+      }
+
+      #flex-wrap > #body-game {
+        padding: 20px 0 40px 0;
+      }
+
+      #flex-wrap.origin #body-origin { display: block; }
+      #flex-wrap.join #body-join { display: block; }
+      #flex-wrap.create #body-create { display: block; }
+      #flex-wrap.game #body-game { display: block; }
+      #flex-wrap.playing #body-playing { display: block; }
+
+      #flex-wrap.game > h1 { display: none; }
+      #flex-wrap.game > h4 { display: block; }
+      #flex-wrap.game > span { display: block; }
+      #flex-wrap.playing > h1 { display: none; }
+      #flex-wrap.playing > #counter { display: block; }
+
+      .button {
+        display: inline-block;
+        background-color: transparent;
+        border-radius: 4px;
+        color: #555;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        border: 1px solid #bbb;
+        height: 38px;
+        line-height: 38px;
+        padding: 0 30px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        white-space: nowrap;
+        box-sizing: border-box;
+      }
+
+      .button:hover {
+        color: #333;
+        border-color: #888;
+        outline: none;
+      }
+
+      input {
+        background-color: white;
+        border: 1px solid rgb(209,209,209);
+        border-radius: 4px;
+        box-shadow: none;
+        display: inline-block;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 300;
+        height: 38px;
+        line-height: 1;
+        margin: 0 0 15px 0;
+        width: 100%;
+        max-width: 280px;
+        padding: 6px 10px;
+        outline: none;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: rgb(51, 195, 240);
+      }
+
+      input.invalid {
+        border-color: #e74c3c;
+      }
+
+      #game-playlist {
+        counter-reset: player-counter;
+        display: block;
+        border-bottom: 1px solid #E1E1E1;
+        padding-bottom: 20px;
+        margin-bottom: 40px;
+      }
+
+      #game-playlist span::before {
+        content: counter(player-counter);
+      	counter-increment: player-counter;
+
+        display: inline-block;
+        margin: 0 15px 0 5px;
+        font-weight: 600;
+        font-size: 13px;
+      }
+
+      #game-playlist span {
+        display: block;
+        text-align: start;
+        background: #f9f9f9;
+        margin-top: 6px;
+        padding: 4px 8px;
+        font-size: 15px;
+        line-height: 1.6;
+        color: #222;
+      }
+
+      #game-playlist span:nth-child(1) {
+        margin-top: 0px;
+      }
+
+      #body-playing {
+        font-size: 18px;
+      }
+
+      #body-playing > span > span {
+        font-weight: 600;
+      }
+
+      #body-playing > span:nth-child(2) {
+        display: none;
+      }
+
+      #body-playing.spy > span:nth-child(2) {
+        display: block;
+      }
+
+      #body-playing.spy > span:nth-child(1) {
+        display: none;
+      }
+
+      #body-playing #players {
+        position: relative;
+        margin-top: 40px;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      #body-playing #players > span {
+        position: relative;
+        display: inline-block;
+        width: 50%;
+        background: #f9f9f9;
+        padding: 4px 8px;
+        font-size: 15px;
+        line-height: 1.6;
+        color: #222;
+        box-sizing: border-box;
+      }
+
+      #body-playing #players > span:hover {
+        background: #e9e9e9;
+        cursor: pointer;
+      }
+
+      #body-playing #players > span.strike {
+        text-decoration: line-through;
+        color: #555
+      }
+
+    </style>
+  </head>
+  <body>
+
+    <div id="flex-wrap" class="origin">
+      <h1>Welcome to Idiot!</h1>
+      <h4>Waiting for players...</h4>
+      <span>Access Code: <span id="access-code-display"></span></span>
+      <div id="counter">8:00</div>
+
+      <div id="body-origin">
+        <a class="button" onclick="switchView('create')">New Game</a>
+        <a class="button" onclick="switchView('join')">Join Game</a>
+      </div>
+
+      <div id="body-join">
+        <input id="access-code" type="text" placeholder="Enter an access code"><br>
+        <input id="join-name" type="text" placeholder="Enter your name"><br>
+        <a class="button" onclick="joinGame()">Join</a>
+        <a class="button" onclick="switchView('origin')">Back</a>
+      </div>
+
+      <div id="body-create">
+        <input id="create-name" type="text" placeholder="Enter your name"><br>
+        <a class="button" onclick="createGame()">Create</a>
+        <a class="button" onclick="switchView('origin')">Back</a>
+      </div>
+
+      <div id="body-game">
+        <div id="game-playlist">
+          <!-- <span id="player-0" contenteditable="true">Gab</span> -->
+        </div>
+
+        <a class="button" id="start-game">Start Game</a>
+        <a class="button" id="leave-game">Leave Game</a>
+      </div>
+
+      <div id="body-playing">
+        <span>The word is <span id="chosen-word"></span>.</span>
+        <span>You are the <span>Spy</span>!</span>
+
+        <div id="players"></div>
+
+        <br>
+        <a class="button" id="next-game">Next Game &raquo;</a>
+        <a class="button" id="end-game">End Game</a>
+      </div>
+
+      <p><span>To play the game:</span> One player doesn't know the word - they are the spy. Players take turns saying a related word trying to prove their innocence, but they can't give the word away. If the group guesses the spy correctly before either the time runs out or the spy guesses the word, they win - else the spy wins!</p>
+      <p>Idiot designed by Gabriel Aravena<br><a href="#">http://github.com/gab/gab</a></p>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
+    <script>
+    // Initialize Firebase
+      var config = {
+        apiKey: "AIzaSyAhBUtvIlktsp4B9SsLTf_r7DwUX__JnE8",
+        authDomain: "idiot-game.firebaseapp.com",
+        databaseURL: "https://idiot-game.firebaseio.com",
+        projectId: "idiot-game",
+        storageBucket: "",
+        messagingSenderId: "798398319858"
+      };
+      firebase.initializeApp(config);
+      const database = firebase.database().ref();
+
+      // add to the string method
+      if(typeof(String.prototype.trim) === "undefined") {
+        String.prototype.trim = function() {
+          return String(this).replace(/^\s+|\s+$/g, '');
+        };
+      }
+
+      // input elements
+      var accessCode = document.getElementById('access-code'),
+          joinName = document.getElementById('join-name'),
+          createName = document.getElementById('create-name');
+
+      // switch view
+      function switchView(view) {
+        // reset everything
+        accessCode.value = joinName.value = createName.value = '';
+        accessCode.className = joinName.className = createName.className = '';
+        document.getElementById('body-playing').className = '';
+        document.getElementById('chosen-word').innerText = '';
+
+        document.getElementById('flex-wrap').className = view;
+      }
+
+      // join a game
+      function joinGame() {
+        var userName = joinName.value.trim(),
+            accessCodeVal = accessCode.value.trim();
+
+        if(accessCodeVal != ''){
+          if(userName != ''){
+
+            database.child(accessCodeVal).once("value").then(function(snap) {
+              if(snap.exists()) {
+                var newUser = database.child(accessCodeVal).child('users').push().key;
+                database.child(accessCodeVal).child('users').child(newUser).set(userName);
+                subscribeGame(accessCodeVal, newUser);
+              } else {
+                accessCode.className = 'invalid';
+                accessCode.onkeyup = function() {
+                  if(this.value.trim() != '') {
+                    accessCode.className = '';
+                    accessCode.onkeyup = null;
+                  }
+                }
+              }
+            });
+
+          } else {
+            joinName.className = 'invalid';
+            joinName.onkeyup = function() {
+              if(this.value.trim() != '') {
+                joinName.className = '';
+                joinName.onkeyup = null;
+              }
+            }
+          }
+        } else {
+          accessCode.className = 'invalid';
+          accessCode.onkeyup = function() {
+            if(this.value.trim() != '') {
+              accessCode.className = '';
+              accessCode.onkeyup = null;
+            }
+          }
+        }
+      }
+
+      // create a game
+      function createGame() {
+        var userName = createName.value.trim();
+
+        if(userName != ''){
+
+          var randomCode = Math.random().toString(36).slice(2).substring(0,6),
+              userCode = Math.random().toString(36).slice(2).substring(0,6);
+
+          database.child(randomCode).set({
+            endTime: 0,
+            started: false,
+            word: '',
+            users: {[userCode]: userName},
+            spy: ''
+          }).then(function() {
+            subscribeGame(randomCode, userCode);
+          });
+
+        } else {
+          createName.className = 'invalid';
+          createName.onkeyup = function() {
+            if(this.value.trim() != '') {
+              createName.className = '';
+              createName.onkeyup = null;
+            }
+          }
+        }
+      }
+
+      var gameID = null;
+
+      // join the lobby of a game
+      function subscribeGame(gameCode, userCode) {
+
+        gameID = gameCode;
+
+        var gameDB = database.child(gameCode);
+
+        // remove self if you disconnect
+        gameDB.child('users').child(userCode).onDisconnect().set(null);
+
+        // add the game code to the window
+        document.getElementById('access-code-display').innerText = gameCode;
+
+        // update user list on changes
+        gameDB.child('users').on('value', function(snapshot) {
+          var users = snapshot.val(), userHTML = '';
+          for(var key in users) {
+            if(users[key] != null) {
+              userHTML += '<span id="player-'+key+'">'+users[key]+'</span>';
+            }
+          }
+          document.getElementById('game-playlist').innerHTML = userHTML;
+        });
+
+        // wait for someone else to start the game
+        var firstTime = true;
+        gameDB.child('started').on('value', function(snap) {
+          if(snap.val() && firstTime) {
+            startGame(userCode);
+          }
+        });
+
+        // add event listeners to buttons
+        var startBtn = document.getElementById('start-game'),
+            leaveBtn = document.getElementById('leave-game');
+
+        startBtn.onclick = function() {
+
+          firstTime = false;
+
+          var selfSpy = false;
+
+          // pick a spy
+          gameDB.child('users').once('value').then(function(snap) {
+
+            var users = snap.val(),
+                numUsers = Object.keys(users).length,
+                randomNumber = Math.floor(Math.random() * numUsers),
+                i = 0;
+
+            for (var key in users) {
+              if(i == randomNumber) {
+                database.child(gameID).child('spy').set(key);
+                break;
+              }
+              i = i + 1;
+            }
+          });
+
+          // pick a word
+          var randomNumber = Math.floor(Math.random() * (wordList.length + 1)),
+              randomWord = wordList[randomNumber];
+          database.child(gameID).child('word').set(randomWord);
+
+          // start the game
+          var time = Date.now() + 480000;
+          database.child(gameID).child('endTime').set(time);
+          database.child(gameID).child('started').set(true);
+          startGame(userCode);
+
+        };
+
+        leaveBtn.onclick = function() {
+          gameDB.child('users').child(userCode).set(null);
+          switchView('origin');
+        };
+
+        switchView('game');
+      }
+
+
+      var timer = null;
+      function startGame(userCode) {
+
+        globalUserCode = userCode;
+
+        database.child(gameID).once('value').then(function(snap) {
+          var gameInfo = snap.val();
+
+          // create the timer
+          window.clearInterval(timer);
+          var endTime = gameInfo.endTime,
+              counter = document.getElementById('counter');
+
+          counter.innerText = "7:59";
+          timer = window.setInterval(function(){
+              var timeRemaining = Math.floor((endTime - Date.now())/1000),
+                  minutesRemaining = Math.floor(timeRemaining/60),
+                  secondsRemaining = timeRemaining%60,
+                  secondsDisplay = ("0" + secondsRemaining).slice(-2);
+
+              if (timeRemaining > 0) {
+                counter.innerText = minutesRemaining + ":" + secondsDisplay;
+              } else {
+                counter.innerText = "Game over."
+              }
+
+            }, 1000);
+
+          // set the spy's screen up
+          var word = gameInfo.word;
+          if(gameInfo.spy == userCode) {
+            document.getElementById('body-playing').className = 'spy';
+
+          // place the word in everyone else's screen
+          } else {
+            document.getElementById('chosen-word').innerText = word;
+          }
+
+          // prepare the player for an end game
+          database.child(gameID).child('started').on('value',function(snap) {
+            if(snap.val() == false) {
+              database.child(gameID).child('users').child(userCode).set(null);
+              switchView('origin');
+            }
+          });
+
+          // prepare the player for a new word
+          database.child(gameID).child('word').on('value',function(snap) {
+            if(snap.val() != word) {
+              startGame(userCode);
+            }
+          });
+
+          // allow the player to click the buttons themself
+          document.getElementById('next-game').onclick = function() {
+
+            var users = gameInfo.users,
+                numUsers = Object.keys(users).length,
+                randomNumber = Math.floor(Math.random() * numUsers),
+                i = 0;
+
+            for (var key in users) {
+              if(i == randomNumber) {
+                database.child(gameID).child('spy').set(key);
+                break;
+              }
+              i = i + 1;
+            }
+
+            // reset the clock
+            var time = Date.now() + 480000;
+            database.child(gameID).child('endTime').set(time);
+
+            // pick a new word
+            var randomWord = wordList[Math.floor(Math.random() * (wordList.length + 1))];
+            database.child(gameID).child('word').set(randomWord);
+          }
+
+          document.getElementById('end-game').onclick = function() {
+            database.child(gameID).child('started').set(false);
+          }
+
+
+        });
+
+        switchView('playing');
+      }
+
+      function toggleStrike(element) {
+        if(element.className == '') {
+          element.className = 'strike';
+        } else {
+          element.className = '';
+        }
+      }
+
+      const wordList = ['people', 'history', 'way', 'art', 'world', 'information', 'map', 'two', 'family', 'government', 'health', 'system', 'computer', 'meat', 'year', 'thanks', 'music', 'person', 'reading', 'method', 'data', 'food', 'understanding', 'theory', 'law', 'bird', 'literature', 'problem', 'software', 'economics', 'love', 'internet', 'television', 'science', 'library', 'nature', 'fact', 'idea', 'temperature', 'investment', 'society', 'activity', 'story', 'media', 'oven', 'language', 'video', 'security', 'country', 'exam', 'movie', 'physics', 'thought', 'boyfriend', 'technology', 'army', 'camera', 'paper', 'environment', 'child', 'month', 'truth', 'marketing', 'university', 'writing', 'article', 'department', 'difference', 'goal', 'news', 'audience', 'fishing', 'growth', 'income', 'marriage', 'user', 'combination', 'failure', 'meaning', 'medicine', 'philosophy', 'teacher', 'communication', 'night', 'chemistry', 'disease', 'disk', 'energy', 'nation', 'road', 'role', 'soup', 'advertising', 'location', 'success', 'addition', 'apartment', 'education', 'math', 'moment', 'painting', 'politics', 'attention', 'decision', 'event', 'property', 'shopping', 'student', 'wood', 'competition', 'distribution', 'entertainment', 'office', 'population', 'president', 'unit', 'category', 'cigarette', 'context', 'introduction', 'opportunity', 'performance', 'driver', 'flight', 'length', 'magazine', 'newspaper', 'relationship', 'teaching', 'cell', 'dealer', 'finding', 'lake', 'member', 'message', 'phone', 'scene', 'appearance', 'association', 'concept', 'customer', 'death', 'discussion', 'housing', 'inflation', 'insurance', 'mood', 'woman', 'advice', 'blood', 'effort', 'expression', 'importance', 'opinion', 'payment', 'reality', 'responsibility', 'situation', 'skill', 'statement', 'wealth', 'application', 'city', 'county', 'depth', 'estate', 'foundation', 'grandmother', 'heart', 'perspective', 'photo', 'recipe', 'studio', 'topic', 'collection', 'depression', 'imagination', 'passion', 'percentage', 'resource', 'setting', 'ad', 'agency', 'college', 'connection', 'criticism', 'debt', 'description', 'memory', 'patience', 'secretary', 'solution', 'administration', 'aspect', 'attitude', 'director', 'personality', 'psychology', 'recommendation', 'response', 'selection', 'storage', 'version', 'alcohol', 'argument', 'complaint', 'contract', 'emphasis', 'highway', 'loss', 'membership', 'possession', 'preparation', 'steak', 'union', 'agreement', 'cancer', 'currency', 'employment', 'engineering', 'entry', 'interaction', 'mixture', 'preference', 'region', 'republic', 'tradition', 'virus', 'actor', 'classroom', 'delivery', 'device', 'difficulty', 'drama', 'election', 'engine', 'football', 'guidance', 'hotel', 'owner', 'priority', 'protection', 'suggestion', 'tension', 'variation', 'anxiety', 'atmosphere', 'awareness', 'bath', 'bread', 'candidate', 'climate', 'comparison', 'confusion', 'construction', 'elevator', 'emotion', 'employee', 'employer', 'guest', 'height', 'leadership', 'mall', 'manager', 'operation', 'recording', 'sample', 'transportation', 'charity', 'cousin', 'disaster', 'editor', 'efficiency', 'excitement', 'extent', 'feedback', 'guitar', 'homework', 'leader', 'mom', 'outcome', 'permission', 'presentation', 'promotion', 'reflection', 'refrigerator', 'resolution', 'revenue', 'session', 'singer', 'tennis', 'basket', 'bonus', 'cabinet', 'childhood', 'church', 'clothes', 'coffee', 'dinner', 'drawing', 'hair', 'hearing', 'initiative', 'judgment', 'lab', 'measurement', 'mode', 'mud', 'orange', 'poetry', 'police', 'possibility', 'procedure', 'queen', 'ratio', 'relation', 'restaurant', 'satisfaction', 'sector', 'signature', 'significance', 'song', 'tooth', 'town', 'vehicle', 'volume', 'wife', 'accident', 'airport', 'appointment', 'arrival', 'assumption', 'baseball', 'chapter', 'committee', 'conversation', 'database', 'enthusiasm', 'error', 'explanation', 'farmer', 'gate', 'girl', 'hall', 'historian', 'hospital', 'injury', 'instruction', 'maintenance', 'manufacturer', 'meal', 'perception', 'pie', 'poem', 'presence', 'proposal', 'reception', 'replacement', 'revolution', 'river', 'son', 'speech', 'tea', 'village', 'warning', 'winner', 'worker', 'writer', 'assistance', 'breath', 'buyer', 'chest', 'chocolate', 'conclusion', 'contribution', 'cookie', 'courage', 'dad', 'desk', 'drawer', 'establishment', 'examination', 'garbage', 'grocery', 'honey', 'impression', 'improvement', 'independence', 'insect', 'inspection', 'inspector', 'king', 'ladder', 'menu', 'penalty', 'piano', 'potato', 'profession', 'professor', 'quantity', 'reaction', 'requirement', 'salad', 'sister', 'supermarket', 'tongue', 'weakness', 'wedding', 'affair', 'ambition', 'analyst', 'apple', 'assignment', 'assistant', 'bathroom', 'bedroom', 'beer', 'birthday', 'celebration', 'championship', 'cheek', 'client', 'consequence', 'departure', 'diamond', 'dirt', 'ear', 'fortune', 'friendship', 'funeral', 'gene', 'girlfriend', 'hat', 'indication', 'intention', 'lady', 'midnight', 'negotiation', 'obligation', 'passenger', 'pizza', 'platform', 'poet', 'pollution', 'recognition', 'reputation', 'shirt', 'sir', 'speaker', 'stranger', 'surgery', 'sympathy', 'tale', 'throat', 'trainer', 'uncle', 'youth', 'time', 'work', 'film', 'water', 'money', 'example', 'while', 'business', 'study', 'game', 'life', 'form', 'air', 'day', 'place', 'number', 'part', 'field', 'fish', 'back', 'process', 'heat', 'hand', 'experience', 'job', 'book', 'end', 'point', 'type', 'home', 'economy', 'value', 'body', 'market', 'guide', 'interest', 'state', 'radio', 'course', 'company', 'price', 'size', 'card', 'list', 'mind', 'trade', 'line', 'care', 'group', 'risk', 'word', 'fat', 'force', 'key', 'light', 'training', 'name', 'school', 'top', 'amount', 'level', 'order', 'practice', 'research', 'sense', 'service', 'piece', 'web', 'boss', 'sport', 'fun', 'house', 'page', 'term', 'test', 'answer', 'sound', 'focus', 'matter', 'kind', 'soil', 'board', 'oil', 'picture', 'access', 'garden', 'range', 'rate', 'reason', 'future', 'site', 'demand', 'exercise', 'image', 'case', 'cause', 'coast', 'action', 'age', 'bad', 'boat', 'record', 'result', 'section', 'building', 'mouse', 'cash', 'class', 'nothing', 'period', 'plan', 'store', 'tax', 'side', 'subject', 'space', 'rule', 'stock', 'weather', 'chance', 'figure', 'man', 'model', 'source', 'beginning', 'earth', 'program', 'chicken', 'design', 'feature', 'head', 'material', 'purpose', 'question', 'rock', 'salt', 'act', 'birth', 'car', 'dog', 'object', 'scale', 'sun', 'note', 'profit', 'rent', 'speed', 'style', 'war', 'bank', 'craft', 'half', 'inside', 'outside', 'standard', 'bus', 'exchange', 'eye', 'fire', 'position', 'pressure', 'stress', 'advantage', 'benefit', 'box', 'frame', 'issue', 'step', 'cycle', 'face', 'item', 'metal', 'paint', 'review', 'room', 'screen', 'structure', 'view', 'account', 'ball', 'discipline', 'medium', 'share', 'balance', 'bit', 'black', 'bottom', 'choice', 'gift', 'impact', 'machine', 'shape', 'tool', 'wind', 'address', 'average', 'career', 'culture', 'morning', 'pot', 'sign', 'table', 'task', 'condition', 'contact', 'credit', 'egg', 'hope', 'ice', 'network', 'north', 'square', 'attempt', 'date', 'effect', 'link', 'post', 'star', 'voice', 'capital', 'challenge', 'friend', 'self', 'shot', 'brush', 'couple', 'debate', 'exit', 'front', 'function', 'lack', 'living', 'plant', 'plastic', 'spot', 'summer', 'taste', 'theme', 'track', 'wing', 'brain', 'button', 'click', 'desire', 'foot', 'gas', 'influence', 'notice', 'rain', 'wall', 'base', 'damage', 'distance', 'feeling', 'pair', 'savings', 'staff', 'sugar', 'target', 'text', 'animal', 'author', 'budget', 'discount', 'file', 'ground', 'lesson', 'officer', 'phase', 'reference', 'register', 'sky', 'stage', 'stick', 'title', 'trouble', 'bowl', 'bridge', 'campaign', 'character', 'club', 'edge', 'evidence', 'fan', 'letter', 'lock', 'maximum', 'novel', 'option', 'pack', 'park', 'plenty', 'quarter', 'skin', 'sort', 'weight', 'baby', 'background', 'carry', 'dish', 'factor', 'fruit', 'glass', 'joint', 'master', 'muscle', 'red', 'strength', 'traffic', 'trip', 'vegetable', 'appeal', 'chart', 'gear', 'ideal', 'kitchen', 'land', 'log', 'mother', 'net', 'party', 'principle', 'relative', 'sale', 'season', 'signal', 'spirit', 'street', 'tree', 'wave', 'belt', 'bench', 'commission', 'copy', 'drop', 'minimum', 'path', 'progress', 'project', 'sea', 'south', 'status', 'stuff', 'ticket', 'tour', 'angle', 'blue', 'breakfast', 'confidence', 'daughter', 'degree', 'doctor', 'dot', 'dream', 'duty', 'essay', 'father', 'fee', 'finance', 'hour', 'juice', 'limit', 'luck', 'milk', 'mouth', 'peace', 'pipe', 'seat', 'stable', 'storm', 'substance', 'team', 'trick', 'afternoon', 'bat', 'beach', 'blank', 'catch', 'chain', 'consideration', 'cream', 'crew', 'detail', 'gold', 'interview', 'kid', 'mark', 'match', 'mission', 'pain', 'pleasure', 'score', 'screw', 'sex', 'shop', 'shower', 'suit', 'tone', 'window', 'agent', 'band', 'block', 'bone', 'calendar', 'cap', 'coat', 'contest', 'corner', 'court', 'cup', 'district', 'door', 'east', 'finger', 'garage', 'guarantee', 'hole', 'hook', 'implement', 'layer', 'lecture', 'lie', 'manner', 'meeting', 'nose', 'parking', 'partner', 'profile', 'respect', 'rice', 'routine', 'schedule', 'swimming', 'telephone', 'tip', 'winter', 'airline', 'bag', 'battle', 'bed', 'bill', 'bother', 'cake', 'code', 'curve', 'designer', 'dimension', 'dress', 'ease', 'emergency', 'evening', 'extension', 'farm', 'fight', 'gap', 'grade', 'holiday', 'horror', 'horse', 'host', 'husband', 'loan', 'mistake', 'mountain', 'nail', 'noise', 'occasion', 'package', 'patient', 'pause', 'phrase', 'proof', 'race', 'relief', 'sand', 'sentence', 'shoulder', 'smoke', 'stomach', 'string', 'tourist', 'towel', 'vacation', 'west', 'wheel', 'wine', 'arm', 'aside', 'associate', 'bet', 'blow', 'border', 'branch', 'breast', 'brother', 'buddy', 'bunch', 'chip', 'coach', 'cross', 'document', 'draft', 'dust', 'expert', 'floor', 'god', 'golf', 'habit', 'iron', 'judge', 'knife', 'landscape', 'league', 'mail', 'mess', 'native', 'opening', 'parent', 'pattern', 'pin', 'pool', 'pound', 'request', 'salary', 'shame', 'shelter', 'shoe', 'silver', 'tackle', 'tank', 'trust', 'assist', 'bake', 'bar', 'bell', 'bike', 'blame', 'boy', 'brick', 'chair', 'closet', 'clue', 'collar', 'comment', 'conference', 'devil', 'diet', 'fear', 'fuel', 'glove', 'jacket', 'lunch', 'monitor', 'mortgage', 'nurse', 'pace', 'panic', 'peak', 'plane', 'reward', 'row', 'sandwich', 'shock', 'spite', 'spray', 'surprise', 'till', 'transition', 'weekend', 'welcome', 'yard', 'alarm', 'bend', 'bicycle', 'bite', 'blind', 'bottle', 'cable', 'candle', 'clerk', 'cloud', 'concert', 'counter', 'flower', 'grandfather', 'harm', 'knee', 'lawyer', 'leather', 'load', 'mirror', 'neck', 'pension', 'plate', 'purple', 'ruin', 'ship', 'skirt', 'slice', 'snow', 'specialist', 'stroke', 'switch', 'trash', 'tune', 'zone', 'anger', 'award', 'bid', 'bitter', 'boot', 'bug', 'camp', 'candy', 'carpet', 'cat', 'champion', 'channel', 'clock', 'comfort', 'cow', 'crack', 'engineer', 'entrance', 'fault', 'grass', 'guy', 'hell', 'highlight', 'incident', 'island', 'joke', 'jury', 'leg', 'lip', 'mate', 'motor', 'nerve', 'passage', 'pen', 'pride', 'priest', 'prize', 'promise', 'resident', 'resort', 'ring', 'roof', 'rope', 'sail', 'scheme', 'script', 'sock', 'station', 'toe', 'tower', 'truck', 'witness', 'human', 'guard', 'travel', 'cook', 'dance', 'cold', 'present', 'green', 'run', 'fly', 'chemical', 'jump', 'kick', 'remote', 'sleep', 'dark', 'drink', 'tap', 'smell', 'adult', 'swim', 'train', 'kiss'];
+
+    </script>
+  </body>
+</html>
